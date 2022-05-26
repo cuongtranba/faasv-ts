@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { log } from "./logger/logger";
 import natQueue from "./nats/nats";
 import gatewayServer from "./server/gateway";
 
@@ -15,7 +16,7 @@ const nats = process.env.NATS;
     Func: (payload: { name: string }) => {
       return {
         name: payload.name,
-        message: "hello",
+        message: "hello" + payload.name,
       };
     },
   });
@@ -29,12 +30,12 @@ const nats = process.env.NATS;
   });
   process.on("SIGTERM", () => {
     server.stop(() => {
-      console.log("[server]: Server is stopped");
+      log.warn("[server]: Server is stopped");
     });
   });
   process.on("SIGINT", () => {
     server.stop(() => {
-      console.log("[server]: Server is stopped");
+      log.warn("[server]: Server is stopped");
     });
   });
   server.start();

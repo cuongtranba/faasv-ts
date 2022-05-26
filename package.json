@@ -21,5 +21,8 @@
     "nats": "^2.7.0",
     "pino": "^7.11.0",
     "typescript": "^4.6.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.16"
   }
 }

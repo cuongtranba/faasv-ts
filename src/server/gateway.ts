@@ -1,6 +1,7 @@
 import bodyParser from "body-parser";
 import express, { Express, NextFunction, Request, Response } from "express";
 import { Server } from "http";
+import { log } from "../logger/logger";
 import { IMsg, IMsgError as IMsgError } from "../types/msg";
 import {
   closeCallBack as closeCallback,
@@ -39,6 +40,7 @@ const gatewayServer = () => {
           const result = await _option.queue.Request(msg.subject, msg.payload);
           return res.send(result);
         } catch (e) {
+          log.error(e, `payload: ${JSON.stringify(msg)}`);
           return next(e);
         }
       });
@@ -54,14 +56,16 @@ const gatewayServer = () => {
         return next();
       });
       server = app.listen(_option.port, () => {
-        console.log(`[server]: Server is running at ${_option.port}`);
+        log.info(`[server]: Server is running at ${_option.port}`);
       });
       return server;
     },
     stop: (cb: closeCallback) => {
       server.close((err) => {
-        _option.queue.Close();
-        cb(err);
+        const queueClosePromise = _option.queue.Close() as Promise<void>;
+        queueClosePromise.then(() => {
+          cb(err);
+        });
       });
     },
   };

@@ -1,4 +1,5 @@
 import { connect, ConnectionOptions, JSONCodec, NatsConnection } from "nats";
+import { log } from "../logger/logger";
 import { IHandler } from "../types/handler";
 import { IQueue } from "../types/queue";
 
@@ -12,8 +13,10 @@ const natQueue = async (opts?: ConnectionOptions): Promise<IQueue> => {
     Close: async () => {
       await _nc.drain();
       await _nc.close();
+      log.info("[NAT] closed");
     },
     Start: async () => {
+      log.info(`[queue] queue start: ${_nc.info.host}:${_nc.info.port}`);
       await _nc.closed();
     },
     Publish: <T, V>(subject: string, payload: T) => {
