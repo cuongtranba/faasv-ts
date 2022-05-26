@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const body_parser_1 = __importDefault(require("body-parser"));
 const express_1 = __importDefault(require("express"));
+const logger_1 = require("../logger/logger");
 const msg_1 = require("../types/msg");
 const gatewayServer = () => {
     let _option = {
@@ -36,27 +37,32 @@ const gatewayServer = () => {
                     return res.send(result);
                 }
                 catch (e) {
-                    if (e instanceof msg_1.IMsgError) {
-                        return next(e);
-                    }
-                    const err = new msg_1.IMsgError("unknown", e.message, msg.subject);
-                    return next(err);
+                    logger_1.log.error(e, `payload: ${JSON.stringify(msg)}`);
+                    return next(e);
                 }
             });
             app.use((err, req, res, next) => {
                 if (err) {
-                    return res.status(500).send(err);
+                    if (err instanceof msg_1.IMsgError) {
+                        return res.status(500).json(err);
+                    }
+                    return res
+                        .status(500)
+                        .json(new msg_1.IMsgError("unknown", err.message, req.body.subject));
                 }
                 return next();
             });
-            return app.listen(_option.port, () => {
-                console.log(`[server]: Server is running at ${_option.port}`);
+            server = app.listen(_option.port, () => {
+                logger_1.log.info(`[server]: Server is running at ${_option.port}`);
             });
+            return server;
         },
         stop: (cb) => {
             server.close((err) => {
-                _option.queue.Close();
-                cb(err);
+                const queueClosePromise = _option.queue.Close();
+                queueClosePromise.then(() => {
+                    cb(err);
+                });
             });
         },
     };

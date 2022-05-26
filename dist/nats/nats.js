@@ -8,6 +8,7 @@ var __asyncValues = (this && this.__asyncValues) || function (o) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const nats_1 = require("nats");
+const logger_1 = require("../logger/logger");
 let _nc = null;
 const natQueue = async (opts) => {
     if (_nc == null) {
@@ -17,8 +18,10 @@ const natQueue = async (opts) => {
         Close: async () => {
             await _nc.drain();
             await _nc.close();
+            logger_1.log.info("[NAT] closed");
         },
         Start: async () => {
+            logger_1.log.info(`[queue] queue start: ${_nc.info.host}:${_nc.info.port}`);
             await _nc.closed();
         },
         Publish: (subject, payload) => {

@@ -4,16 +4,21 @@ import { IHandler } from "../types/handler";
 import { IQueue } from "../types/queue";
 
 let _nc: NatsConnection = null;
+let _natsQueue: IQueue = null;
 
 const natQueue = async (opts?: ConnectionOptions): Promise<IQueue> => {
   if (_nc == null) {
     _nc = await connect(opts);
   }
-  return {
+  if (_natsQueue != null) {
+    return _natsQueue;
+  }
+  _natsQueue = {
     Close: async () => {
       await _nc.drain();
       await _nc.close();
       log.info("[NAT] closed");
+      _natsQueue = null;
     },
     Start: async () => {
       log.info(`[queue] queue start: ${_nc.info.host}:${_nc.info.port}`);
@@ -44,6 +49,7 @@ const natQueue = async (opts?: ConnectionOptions): Promise<IQueue> => {
       }
     },
   };
+  return _natsQueue;
 };
 
 export default natQueue;

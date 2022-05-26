@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
+const logger_1 = require("./logger/logger");
 const nats_1 = __importDefault(require("./nats/nats"));
 const gateway_1 = __importDefault(require("./server/gateway"));
 dotenv_1.default.config({});
@@ -17,7 +18,7 @@ const nats = process.env.NATS;
         Func: (payload) => {
             return {
                 name: payload.name,
-                message: "hello",
+                message: "hello" + payload.name,
             };
         },
     });
@@ -29,12 +30,12 @@ const nats = process.env.NATS;
     });
     process.on("SIGTERM", () => {
         server.stop(() => {
-            console.log("[server]: Server is stopped");
+            logger_1.log.warn("[server]: Server is stopped");
         });
     });
     process.on("SIGINT", () => {
         server.stop(() => {
-            console.log("[server]: Server is stopped");
+            logger_1.log.warn("[server]: Server is stopped");
         });
     });
     server.start();
