@@ -35,6 +35,7 @@ const natQueue = async (opts?: ConnectionOptions): Promise<IQueue> => {
       return de.decode(result.data);
     },
     Subscribe: async <T, V>(handler: IHandler<T, V>): Promise<void> => {
+      log.info(`[NAT] Subscribe ${handler.Subject} - queue: ${handler.Queue}`);
       const sub = _nc.subscribe(handler.Subject, {
         queue: handler.Queue,
       });

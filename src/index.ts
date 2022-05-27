@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { log } from "./logger/logger";
 import natQueue from "./nats/nats";
 import gatewayServer from "./server/gateway";
+import { studentHandler, userHandler } from "./types/handler";
 
 dotenv.config({});
 
@@ -10,16 +11,8 @@ const nats = process.env.NATS;
 
 (async () => {
   const queue = await natQueue({ servers: [nats] });
-  queue.Subscribe({
-    Queue: "worker",
-    Subject: "hello",
-    Func: (payload: { name: string }) => {
-      return {
-        name: payload.name,
-        message: "hello" + payload.name,
-      };
-    },
-  });
+  queue.Subscribe(userHandler);
+  queue.Subscribe(studentHandler);
 
   queue.Start();
 

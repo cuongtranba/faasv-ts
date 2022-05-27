@@ -1,36 +1,40 @@
 import natQueue from "../nats/nats";
 
-export interface IHandler<T, V> {
+export interface IHandler<T = any, V = any> {
   Subject: string;
   Queue: string;
   Func: (req: T) => Promise<V> | V;
+  Call?: (req: T) => Promise<V> | V;
 }
 
-const userHandler: IHandler<{ name: string }, { age: string }> = {
-  Subject: "hello",
-  Queue: "worker",
-  Func: (req: { name: string }) => {
-    return {
-      age: "20",
-    };
-  },
+export const withCaller = <T, V>(h: IHandler<T, V>): IHandler<T, V> => {
+  h.Call = async (req: T) => {
+    const nat = await natQueue();
+    const res = await nat.Request<T, V>(h.Subject, req);
+    return res;
+  };
+  return h;
 };
 
-type getTypeReq<T> = T extends IHandler<infer U, infer _> ? U : never;
-type getTypeRes<T> = T extends IHandler<infer _, infer V> ? V : never;
+export const userHandler: IHandler<{ name: string }, { age: string }> =
+  withCaller({
+    Subject: "user",
+    Queue: "worker",
+    Func: (req: { name: string }) => {
+      return {
+        age: "200",
+      };
+    },
+  });
 
-type callerFunc = <T>(
-  req: T extends IHandler<infer U, infer _> ? U : never
-) => Promise<T extends IHandler<infer _, infer V> ? V : never>;
-
-const caller = async <T>(
-  req: T extends IHandler<infer U, infer _> ? U : never
-): Promise<T extends IHandler<infer _, infer V> ? V : never> => {
-  const nat = await natQueue();
-  type TReq = getTypeReq<T>;
-  type TRes = getTypeRes<T>;
-  const res = await nat.Request<TReq, TRes>("userHandler.Subject", req);
-  return res;
-};
-
-const result = caller<typeof userHandler>({ name: "cuong" });
+export const studentHandler: IHandler<{ name: string }, { age: string }> =
+  withCaller({
+    Subject: "student",
+    Queue: "worker",
+    Func: async (req: { name: string }) => {
+      const result = await userHandler.Call({ name: "test001" });
+      return {
+        age: result.age,
+      };
+    },
+  });
